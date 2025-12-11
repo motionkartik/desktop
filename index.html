@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Startup Bookmarks</title>
+  <style>
+    /* Reset and base styles */
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      padding: 2rem;
+      background: #000;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      color: #fff;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-end;
+      min-height: 100vh;
+    }
+
+    /* Typography */
+    h1 {
+      color: #ffffff;
+      margin-bottom: 2rem;
+      font-size: 2rem;
+      font-weight: 600;
+      text-align: center;
+    }
+
+    /* Search functionality */
+    .search-container {
+      position: relative;
+      width: 100%;
+      max-width: 600px;
+      margin-bottom: 2rem;
+    }
+
+    .search-box {
+      width: 100%;
+      padding: 1rem 3rem 1rem 1rem;
+      background: #1a1a1a;
+      border: none;
+      border-radius: 12px;
+      color: #fff;
+      font-size: 1rem;
+      outline: none;
+      transition: background 0.1s ease;
+    }
+
+    .search-box:focus {
+      background: #333;
+    }
+
+    .search-button {
+      position: absolute;
+      right: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: transparent;
+      border: none;
+      color: #fff;
+      cursor: pointer;
+      padding: 8px;
+      transition: color 0.1s ease;
+    }
+
+    .search-button:hover {
+      color: #ccc;
+    }
+
+    .search-button svg {
+      width: 18px;
+      height: 18px;
+      display: block;
+    }
+
+    /* Bookmarks grid */
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 1.5rem;
+      width: 100%;
+      max-width: 1200px;
+    }
+
+    .bookmark {
+      background: #1a1a1a;
+      padding: 1.5rem 1rem;
+      border-radius: 12px;
+      text-align: center;
+      text-decoration: none;
+      color: #fff;
+      transition: all 0.1s ease;
+      word-break: break-word;
+    }
+
+    .bookmark:hover {
+      background: #333;
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(255, 255, 255, 0.1);
+    }
+    
+        .bookmark--folder {
+        cursor: pointer;
+        outline: 1px solid #353535;
+        outline-offset: 3px;
+    }
+
+    .bookmark--folder:hover {
+        outline-color: #b3b3b3;
+    }
+
+    /* Status messages */
+    .loading,
+    .error {
+      text-align: center;
+      margin-top: 2rem;
+    }
+
+    .error {
+      padding: 1rem;
+      border-radius: 8px;
+      color: #ff6b6b;
+      background: rgba(255, 107, 107, 0.1);
+      border: 1px solid rgba(255, 107, 107, 0.3);
+    }
+
+    /* Folder View Styles */
+    .folder-overlay {
+      position: fixed;
+      inset: 0;
+      background-color: rgba(0, 0, 0, 0.7);
+      backdrop-filter: blur(4px);
+      z-index: 100;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.1s ease;
+    }
+    
+    .folder-view {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%) scale(0.95);
+      background-color: #101010;
+      border-radius: 16px;
+      padding: 2rem;
+      width: 90%;
+      max-width: 800px;
+      z-index: 101;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.1s ease, transform 0.1s ease;
+    }
+
+    .folder-overlay.visible,
+    .folder-view.visible {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .folder-view.visible {
+      transform: translate(-50%, -50%) scale(1);
+    }
+
+    .folder-view h2 {
+      margin-top: 0;
+      text-align: center;
+      font-weight: 600;
+      margin-bottom: 2rem;
+    }
+
+    /* Responsive design */
+    @media (max-width: 768px) {
+      body { padding: 1rem; }
+      h1 { font-size: 1.5rem; margin-bottom: 1.5rem; }
+      .grid { grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 1rem; }
+      .bookmark { padding: 1rem 0.75rem; }
+      .folder-view { padding: 1.5rem; }
+    }
+
+    /* DESKTOP VIEW */
+    @media (min-width: 769px) {
+      body {
+        justify-content: flex-start;
+        padding-top: 4rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <h1>motionkartik Desktop</h1>
+  
+  <div class="search-container">
+    <input type="text" class="search-box" id="searchInput" >
+    <button class="search-button" id="searchButton" aria-label="Search">
+      <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+        <path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
+      </svg>
+    </button>
+  </div>
+
+  <div class="loading" id="loading">Loading bookmarks...</div>
+  <div class="grid" id="bookmarks" style="display: none;"></div>
+  <div class="error" id="error" style="display: none;"></div>
+
+  <div id="folderOverlay" class="folder-overlay"></div>
+  <div id="folderView" class="folder-view">
+    <h2 id="folderViewTitle"></h2>
+    <div id="folderViewContent" class="grid"></div>
+  </div>
+
+  <script>
+    // Configuration
+    const CONFIG = {
+      CSV_URL: 'bookmarks.csv',
+      SEARCH_ENGINE: 'https://www.google.com/search?q='
+    };
+
+    // DOM elements cache
+    const elements = {
+      loading: document.getElementById('loading'),
+      bookmarks: document.getElementById('bookmarks'),
+      error: document.getElementById('error'),
+      searchInput: document.getElementById('searchInput'),
+      searchButton: document.getElementById('searchButton'),
+      folderOverlay: document.getElementById('folderOverlay'),
+      folderView: document.getElementById('folderView'),
+      folderViewTitle: document.getElementById('folderViewTitle'),
+      folderViewContent: document.getElementById('folderViewContent'),
+    };
+
+    // State management
+    const UI_STATES = {
+      LOADING: 'loading',
+      BOOKMARKS: 'bookmarks',
+      ERROR: 'error'
+    };
+    
+    function showState(state) {
+      Object.values(UI_STATES).forEach(uiState => {
+        elements[uiState].style.display = state === uiState ? 
+          (uiState === 'bookmarks' ? 'grid' : 'block') : 'none';
+      });
+    }
+
+    function showError(message) {
+      showState(UI_STATES.ERROR);
+      elements.error.textContent = `⚠️ ${message}`;
+    }
+
+    function parseBookmarks(csv) {
+      return csv.trim().split('\n').slice(1).map(line => {
+        const parts = line.split(',').map(s => s.trim()).filter(Boolean);
+        if (parts.length < 2) return null;
+        const name = parts[0];
+        const urls = parts.slice(1);
+        if (urls.length > 1) {
+          return { name, urls, type: 'folder' };
+        } else {
+          return { name, url: urls[0], type: 'link' };
+        }
+      }).filter(Boolean);
+    }
+    
+     //  * Clean, capitalized name from a URL.
+        function getNameFromUrl(url) {
+        try {
+            const hostname = new URL(url).hostname;
+            const parts = hostname.replace(/^www\./, '').split('.');
+            let name = "";
+
+            if (parts.length >= 2) {
+                // Example: gemini.google.com -> Google Gemini
+                // Example: mail.google.com -> Google Mail
+                const domain = parts[parts.length - 2];
+                const subdomain = parts[0];
+
+                if (parts.length > 2 && subdomain !== 'www') { // Check for actual subdomain
+                    name = `${domain.charAt(0).toUpperCase() + domain.slice(1)} ${subdomain.charAt(0).toUpperCase() + subdomain.slice(1)}`;
+                } else { // No significant subdomain or just www
+                    name = domain.charAt(0).toUpperCase() + domain.slice(1);
+                }
+            } else {
+                // Fallback for simple domains like example.com
+                name = parts[0].charAt(0).toUpperCase() + parts[0].slice(1);
+            }
+            return name;
+        } catch (e) {
+            return "Invalid URL"; // Fallback for invalid URLs
+        }
+    }
+
+    function createLinkElement({ name, url, title }) {
+        const link = document.createElement('a');
+        link.className = 'bookmark';
+        link.href = url;
+        link.target = '_blank';
+        link.rel = 'noopener noreferrer';
+        link.textContent = name;
+        link.title = title || name;
+        return link;
+    }
+    
+    function createBookmark(bookmark) {
+      if (bookmark.type === 'folder') {
+        const folder = document.createElement('div');
+        folder.className = 'bookmark bookmark--folder';
+        folder.textContent = `${bookmark.name}`; // folder icon
+        folder.title = `Open "${bookmark.name}" folder`;
+        folder.addEventListener('click', () => openFolderView(bookmark));
+        return folder;
+      } else {
+        return createLinkElement(bookmark);
+      }
+    }
+    
+    function openFolderView(folderBookmark) {
+        elements.folderViewTitle.textContent = folderBookmark.name;
+        elements.folderViewContent.innerHTML = '';
+
+        folderBookmark.urls.forEach(url => {
+            const name = getNameFromUrl(url);
+            const linkEl = createLinkElement({ name, url, title: url });
+            elements.folderViewContent.appendChild(linkEl);
+        });
+
+        elements.folderOverlay.classList.add('visible');
+        elements.folderView.classList.add('visible');
+    }
+
+    function closeFolderView() {
+        elements.folderOverlay.classList.remove('visible');
+        elements.folderView.classList.remove('visible');
+    }
+
+    function performSearch() {
+      const query = elements.searchInput.value.trim();
+      if (query) {
+        window.open(`${CONFIG.SEARCH_ENGINE}${encodeURIComponent(query)}`, '_blank');
+        elements.searchInput.value = '';
+      }
+    }
+
+    async function loadBookmarks() {
+      showState(UI_STATES.LOADING);
+      try {
+        const response = await fetch(CONFIG.CSV_URL);
+        if (!response.ok) throw new Error(`HTTP ${response.status}: Could not load bookmarks`);
+        const csv = await response.text();
+        const bookmarks = parseBookmarks(csv);
+        if (bookmarks.length === 0) throw new Error('No valid bookmarks found');
+        
+        elements.bookmarks.innerHTML = '';
+        bookmarks.forEach(bookmark => {
+          elements.bookmarks.appendChild(createBookmark(bookmark));
+        });
+        
+        showState(UI_STATES.BOOKMARKS);
+      } catch (error) {
+        console.error('Bookmark loading failed:', error);
+        showError(error.message);
+      }
+    }
+
+    // Event listeners
+    elements.searchInput.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') performSearch();
+    });
+    elements.searchButton.addEventListener('click', performSearch);
+    
+    elements.folderOverlay.addEventListener('click', closeFolderView);
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            closeFolderView();
+        }
+    });
+
+    // Initialize
+    document.addEventListener('DOMContentLoaded', loadBookmarks);
+  </script>
+</body>
+</html>
